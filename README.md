@@ -17,12 +17,9 @@ Use
 WordCount example (in Linux)
 -----------------------------
 
-- Compile reduce.cpp
-    g++ -o reduce reduce.cpp
-- Run map script
-    python mapreduce.py map 'python map.py' example.txt output1.txt
-- Run reduce script
-    python mapreduce.py reduce './reduce' output1.txt output2.txt
+- Compile reduce.cpp: `g++ -o reduce reduce.cpp`
+- Run map script: `python mapreduce.py map 'python map.py' example.txt output1.txt`
+- Run reduce script: `python mapreduce.py reduce './reduce' output1.txt output2.txt`
 
 
 Notes

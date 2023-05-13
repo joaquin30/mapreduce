@@ -1,5 +1,6 @@
 from subprocess import run
 import sys
+import shlex
 
 
 def die(msg):
@@ -26,21 +27,19 @@ def getkv(tsv):
 
 
 def fmap(script, src, dst):
-    data = None
+    inp = ""
     try:
         with open(src, encoding="utf8") as f:
-            data = f.read()
+            ind = 1
+            for line in f:
+                inp += f"{ind}\t{line}\n"
+                ind += 1
     except:
         die("Source file doesn't exist or can't be read.")
 
-    data = data.split('\n')
-    inp = ""
-    for ind, line in enumerate(data):
-        inp += f"{ind}\t{line}\n"
-    
     out = None
     try:
-        out = run(script.split(), input=inp.encode(),
+        out = run(shlex.split(script), input=inp.encode(),
             capture_output=True).stdout.decode("utf8")
     except:
         die("The script doesn't exist or failed in execution.")
