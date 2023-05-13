@@ -32,7 +32,10 @@ def fmap(script, src, dst):
         with open(src, encoding="utf8") as f:
             ind = 1
             for line in f:
-                inp += f"{ind}\t{line}\n"
+                text = line.replace('\t', ' ')
+                text = text.strip('\n')
+                print(text)
+                inp += f"{ind}\t{text}\n"
                 ind += 1
     except:
         die("Source file doesn't exist or can't be read.")
@@ -75,7 +78,7 @@ def freduce(script, src, dst):
             inp += f"{k}\t{v}\n"
         else:
             try:
-                out += run(script.split(), input=inp.encode(),
+                out += run(shlex.split(script), input=inp.encode(),
                             capture_output=True).stdout.decode("utf8")
             except:
                 die("The script doesn't exist or failed in execution.")
@@ -84,7 +87,7 @@ def freduce(script, src, dst):
             key = k
 
     try:
-        out += run(script.split(), input=inp.encode(),
+        out += run(shlex.split(script), input=inp.encode(),
                     capture_output=True).stdout.decode("utf8")
     except:
         die("The script doesn't exist or failed in execution.")
