@@ -11,6 +11,7 @@ def getkv(tsv):
         kvs.append(kv)
     return kvs
 
+
 def die(msg):
     print("ERROR:", msg, """USE:
 mapreduce [map OR reduce] [path_to_script] [source_file] [destination_file]""",
@@ -44,7 +45,49 @@ def fmap(script, src, dst):
 
 
 def freduce(script, src, dst):
-    pass
+    data = None
+    try:
+        with open(src, encoding="utf8") as f:
+            data = f.read()
+    except:
+        die("Source file doesn't exist or can't be read.")
+
+    data = getkv(data)
+    if len(data) == 0:
+        print("WARNING: Source file empty. TSV format can be malformed.",
+            file=sys.stderr)
+        sys.exit()
+
+    key = data[0][0]
+    inp = ""
+    out = []
+    for k, v in data:
+        if k == key:
+            inp += f"{k}\t{v}\n"
+        else:
+            try:
+                ret = run(script.split(), input=inp.encode(),
+                            capture_output=True).stdout.decode("utf8")
+                out += getkv(ret)
+            except:
+                die("The script doesn't exist or failed in execution.")
+
+            inp = f"{k}\t{v}\n"
+            key = k
+
+    try:
+        ret = run(script.split(), input=inp.encode(),
+                    capture_output=True).stdout.decode("utf8")
+        out += getkv(ret)
+    except:
+        die("The script doesn't exist or failed in execution.")
+
+    try:
+        with open(dst, "w", encoding="utf8") as f:
+            for k, v in out:
+                f.write(f'{k}\t{v}\n')
+    except:
+        die("Unable to write to destination file")
 
 
 def main():
