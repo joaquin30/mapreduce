@@ -1,9 +1,9 @@
 while True:
     try:
         line = input()
-        line = line.split()
-        for w in line:
-            w = ''.join(filter(str.isalpha, w)).lower()
-            print(w,1,sep='\t',end='\n')
+        key, value = line.split('\t')
+        for w in value.split():
+            w = "".join(filter(str.isalpha, w)).lower()
+            print(f"{w}\t1")
     except:
         break

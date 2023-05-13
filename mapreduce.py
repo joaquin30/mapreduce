@@ -2,21 +2,27 @@ from subprocess import run
 import sys
 
 
+def die(msg):
+    print("Error:", msg, """Use:
+python mapreduce.py [map OR reduce] [path_to_script] [source_file] [destination_file]""",
+    sep="\n", file=sys.stderr)
+    sys.exit(1)
+
+
+def warn(msg):
+    print("Warning:", msg, sep="\n", file=sys.stderr)
+
+
 def getkv(tsv):
     kvs = []
     for line in tsv.split('\n'):
+        if len(line) == 0:
+            continue
         kv = tuple(line.split('\t'))
         if len(kv) != 2:
-            continue
+            die("TSV Format malformed.")
         kvs.append(kv)
     return kvs
-
-
-def die(msg):
-    print("ERROR:", msg, """USE:
-mapreduce [map OR reduce] [path_to_script] [source_file] [destination_file]""",
-    sep="\n", file=sys.stderr)
-    sys.exit(1)
 
 
 def fmap(script, src, dst):
@@ -27,9 +33,14 @@ def fmap(script, src, dst):
     except:
         die("Source file doesn't exist or can't be read.")
 
+    data = data.split('\n')
+    inp = ""
+    for ind, line in enumerate(data):
+        inp += f"{ind}\t{line}\n"
+    
     out = None
     try:
-        out = run(script.split(), input=data.encode(),
+        out = run(script.split(), input=inp.encode(),
             capture_output=True).stdout.decode("utf8")
     except:
         die("The script doesn't exist or failed in execution.")
@@ -54,21 +65,19 @@ def freduce(script, src, dst):
 
     data = getkv(data)
     if len(data) == 0:
-        print("WARNING: Source file empty. TSV format can be malformed.",
-            file=sys.stderr)
+        warn("Source file empty.")
         sys.exit()
 
     key = data[0][0]
     inp = ""
-    out = []
+    out = ""
     for k, v in data:
         if k == key:
             inp += f"{k}\t{v}\n"
         else:
             try:
-                ret = run(script.split(), input=inp.encode(),
+                out += run(script.split(), input=inp.encode(),
                             capture_output=True).stdout.decode("utf8")
-                out += getkv(ret)
             except:
                 die("The script doesn't exist or failed in execution.")
 
@@ -76,11 +85,13 @@ def freduce(script, src, dst):
             key = k
 
     try:
-        ret = run(script.split(), input=inp.encode(),
+        out += run(script.split(), input=inp.encode(),
                     capture_output=True).stdout.decode("utf8")
-        out += getkv(ret)
     except:
         die("The script doesn't exist or failed in execution.")
+
+    out = getkv(out)
+    out.sort()
 
     try:
         with open(dst, "w", encoding="utf8") as f:
